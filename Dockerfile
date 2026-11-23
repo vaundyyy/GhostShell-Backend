@@ -1,14 +1,15 @@
-# Etapa 1: Build da aplicação com Maven e JDK 25
-FROM maven:3.9.9-eclipse-temurin-25 AS build
+# Etapa 1: Build da aplicação com JDK 25 + Maven Wrapper do projeto
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
-# Copia apenas o pom.xml primeiro para aproveitar o cache de dependências do Docker
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# Copia o Maven Wrapper e o pom.xml para aproveitar o cache de dependências do Docker
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
 # Copia o código-fonte e gera o JAR executável
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN ./mvnw clean package -DskipTests -B
 
 # Etapa 2: Imagem final enxuta apenas com JRE 25
 FROM eclipse-temurin:25-jre

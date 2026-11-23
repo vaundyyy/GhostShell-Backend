@@ -8,7 +8,7 @@ spring:
       - optional:file:backend/.env[.properties]
 
   profiles:
-    active: ${APP_PROFILE:${SPRING_PROFILES_ACTIVE:prod}}
+    active: ${APP_PROFILE:${SPRING_PROFILES_ACTIVE:dev}}
 
   jpa:
     open-in-view: false
