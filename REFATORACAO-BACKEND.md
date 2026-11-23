@@ -149,3 +149,47 @@ sequenceDiagram
     C->>F: POST /api/ratings (Bearer JWT)
     F-->>R: @AuthenticationPrincipal Long userId
     R->>S: save(userId, RatingRequest)
+    S->>MP: findByIdForUpdate(movieId) [Pessimistic Lock]
+    S->>RP: findByUserAndMovie(userId, movieId)
+    S->>RP: save(Rating)
+    S->>RP: aggregateByMovieId(movieId) [AVG + COUNT]
+    S->>MP: save(Movie atualizado)
+    S-->>R: RatingResponse
+    R-->>C: 200 OK
+```
+
+- **Unicidade:** Chave composta (`movie_id`, `user_id`) garante que cada usuário possua no máximo uma avaliação por filme; reenvios atualizam a nota existente sem inflar o `count`.
+- **Concorrência:** `findByIdForUpdate` aplica *lock pessimista* no registro do filme durante a transação `@Transactional`, evitando *race conditions* no recálculo de `score` e `count`.
+
+---
+
+## 🗄️ Mapeamento Banco de Dados (PostgreSQL / Neon)
+
+O schema é gerenciado externamente no **Neon** (sem Flyway/Liquibase), com `spring.jpa.hibernate.ddl-auto: validate` garantindo compatibilidade no boot.
+
+| Entidade JPA | Tabela no Neon | Chave Primária |
+| :--- | :--- | :--- |
+| `UserEntity` | `tb_user` | `id` (`BIGSERIAL`) |
+| `RoleEntity` | `tb_role` | `id` (`BIGSERIAL`) |
+| `UserEntity.roles` | `tb_user_role` | `(user_id, role_id)` |
+| `MovieEntity` | `tb_movie` | `id` (`BIGSERIAL`) |
+| `RatingEntity` | `tb_score` | `(movie_id, user_id)` |
+
+---
+
+## ✅ Checklist de Progresso
+
+### Concluído e Validado
+- [x] Reestruturação para Arquitetura Hexagonal (`domain`, `application`, `infrastructure`)
+- [x] Contratos explícitos de entrada (`port/in`) e saída (`port/out`)
+- [x] Compatibilidade real das entidades JPA com o schema aplicado no Neon (`ddl-auto: validate`)
+- [x] Cadastro público (`ROLE_USER`), login com BCrypt e geração de JWT validados contra o Neon
+- [x] Carregamento de `ROLE_ADMIN` e controle de acesso RBAC validados
+- [x] Criação e atualização de avaliações (`POST /api/ratings`) contra o Neon sem duplicidade
+- [x] Recálculo transacional de média (`AVG`) e contagem (`COUNT`) com lock pessimista
+- [x] Proteção anti-IDOR em avaliações (`@AuthenticationPrincipal`) e rejeição de JSON desconhecido
+- [x] Cadastro administrativo de filmes (`POST /api/admin/movies`)
+- [x] Envio real de propostas de filmes via SMTP validado (`POST /api/movie-requests` + `@PostConstruct`)
+- [x] Tratamento global de exceções (`ApiError` + `X-Request-Id`)
+- [x] Coleção de testes de API no Bruno (`bruno/GitCine`) executada e validada
+- [x] Suíte de testes unitários e cenários BDD com Cucumber (`auth`, `movies`, `proposals`, `ratings`)
