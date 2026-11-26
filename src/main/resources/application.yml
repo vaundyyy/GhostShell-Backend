@@ -52,7 +52,7 @@ jwt:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://ghost-shell-frontend.vercel.app,http://localhost:3000,http://localhost:5173,http://localhost:8080}
   admin-email: ${ADMIN_EMAIL:}
 
 springdoc:
