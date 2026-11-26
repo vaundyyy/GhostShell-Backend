@@ -13,5 +13,5 @@ public interface RatingJpaRepository extends JpaRepository<RatingEntity, RatingI
     List<Double> findValuesByMovieId(@Param("movieId") Long movieId);
 
     @Query("select coalesce(avg(r.value), 0.0), count(r) from RatingEntity r where r.id.movieId = :movieId")
-    Object[] aggregateByMovieId(@Param("movieId") Long movieId);
+    List<Object[]> aggregateByMovieId(@Param("movieId") Long movieId);
 }

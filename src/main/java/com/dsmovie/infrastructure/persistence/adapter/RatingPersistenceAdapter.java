@@ -39,17 +39,18 @@ public class RatingPersistenceAdapter implements RatingRepositoryPort {
 
     @Override
     public Aggregate aggregateByMovieId(Long movieId) {
-        Object[] aggregate = repository.aggregateByMovieId(movieId);
-        if (aggregate == null || aggregate.length < 2) {
-            return new Aggregate(0.0, 0);
+        List<Object[]> rows = repository.aggregateByMovieId(movieId);
+        if (rows == null || rows.isEmpty()) {
+            throw new IllegalStateException("Aggregate query returned no rows for movie " + movieId);
         }
 
-        double average = aggregate[0] == null
-            ? 0.0
-            : Double.parseDouble(aggregate[0].toString());
-        long count = aggregate[1] == null
-            ? 0
-            : Long.parseLong(aggregate[1].toString());
+        Object[] row = rows.get(0);
+        if (row.length < 2) {
+            throw new IllegalStateException("Unexpected aggregate result: " + row.length + " column(s)");
+        }
+
+        double average = row[0] == null ? 0.0 : ((Number) row[0]).doubleValue();
+        long count = row[1] == null ? 0L : ((Number) row[1]).longValue();
         return new Aggregate(average, count);
     }
 
